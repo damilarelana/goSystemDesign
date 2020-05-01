@@ -26,7 +26,6 @@ func InitializeWebServer(port string) {
 	http.Handle("/", routeHandler)
 
 	// http server
-	log.Println("==== ==== ==== ====")
 	log.Println("Starting webserver on port: " + port)
 	log.Fatal(errors.Wrap(http.ListenAndServe(":"+port, nil), "Failed to start webserver at port:"+port))
 }
