@@ -21,8 +21,8 @@ func ErrMsgHandler(msg string, err error) {
 
 // InterfaceBoltClient defines an interface applicable to connecting to boltDB
 type InterfaceBoltClient interface {
-	OpenBoltDB() // opens a BoltDB connection
-	// QueryAccount(accountID string) (m.Account, error) // returns the composite variable Account
+	OpenBoltDB()                                      // opens a BoltDB connection
+	QueryAccount(accountID string) (m.Account, error) // returns the composite variable Account
 	Seed()
 }
 
@@ -52,9 +52,23 @@ func (bc *BoltClient) Seed() {
 
 // QueryAccount is a method that implements interfaceBoltClient
 // - takes in accountID as argument
-// - retrieves and returns matching test Accounts
-func (bc *BoltClient) QueryAccount() {
-
+// - retrieves matching test Accounts
+// - returns matched account struct and error value
+func (bc *BoltClient) QueryAccount(accountID string) (m.Account, error) {
+	account := m.Account{}                          // initialize the model Account struct
+	err := bc.boltDB.View(func(tx *bolt.Tx) error { // read the 'AccountBucket' object
+		b := tx.Bucket([]byte("AccountBucket"))
+		accountBytes := b.Get([]byte(accountID)) // search and get the specific account with key value `accountID`
+		if accountBytes == nil {
+			return fmt.Errorf("No account found with accountID: " + accountID)
+		}
+		json.Unmarshal(accountBytes, &account) // unmarshal the matched account json (into a struct format) into the memory address for account struct
+		return nil                             // the anonymous function returns a nil error value
+	})
+	if err != nil {
+		return m.Account{}, err // return the empty struct and the err value
+	}
+	return account, nil // return the matched account and nil as err
 }
 
 // initializeBucket creates an "AccountBucket" in BoltDB
