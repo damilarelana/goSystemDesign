@@ -35,3 +35,6 @@ The code leverages the following packages:
 * `strconv`
 
 ***
+
+### Rerun
+remember to always delete `accounts.db` before re-run so as to ensure the DB is recreated each time - since `CreateBucket()` cannot handle a pre-existing bucket
