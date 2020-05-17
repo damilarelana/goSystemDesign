@@ -24,6 +24,7 @@ The code leverages the following packages:
 * [boltDB](github.com/etcd-io/bbolt")
 * [gorilla mux](github.com/gorilla/mux)
 * [error](github.com/pkg/errors)
+* [GoConvey](http://goconvey.co)
 * `net/http`
 * `fmt`
 * `io`
