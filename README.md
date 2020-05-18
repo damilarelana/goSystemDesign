@@ -1,4 +1,4 @@
-### goUrlShortener
+### goSystemDesign
 
 A simple Golang implementation of the system design of an Account microservice that consists of:
 
