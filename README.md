@@ -40,7 +40,7 @@ The code leverages the following packages:
 ***
 
 ### Rerun
-remember to always delete `accounts.db` before re-run so as to ensure the DB is recreated each time - since `CreateBucket()` cannot handle a pre-existing bucket
+When using `go run` to run the code locally BUT without docker, remember to always delete `accounts.db` before re-run so as to ensure the DB is recreated each time - since `CreateBucket()` cannot handle a pre-existing bucket
 
 *** 
 
