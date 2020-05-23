@@ -25,6 +25,7 @@ The code leverages the following packages:
 * [gorilla mux](github.com/gorilla/mux)
 * [error](github.com/pkg/errors)
 * [GoConvey](http://goconvey.co)
+* [docker](https://www.docker.com)
 * `net/http`
 * `fmt`
 * `io`
@@ -32,7 +33,7 @@ The code leverages the following packages:
 * `reflect`
 * `errors`
 * `os`
-*	`encoding/json`
+* `encoding/json`
 * `strconv`
 
 ***
@@ -40,20 +41,45 @@ The code leverages the following packages:
 ### Rerun
 remember to always delete `accounts.db` before re-run so as to ensure the DB is recreated each time - since `CreateBucket()` cannot handle a pre-existing bucket
 
-### Docker
-To build the docker image, go the project's root directory [`goSystemDesign`] and run
+*** 
+
+### Go Binary
+To build the go binary required by docker container, go to `/goSystemDesign/accountService` then run
 ```bash
-    $ docker build -t test/service --file Dockerfile.accountservice .
+    $ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -tags netgo -ldflags '-w' -o accountservice-linux-amd64
 ```
-To start the docker container run
+
+***
+
+### Docker (via Go binary)
+
+To create a docker image with the previously built binary, go to the project's root directory [`goSystemDesign`] and run:
+```bash
+    $ docker build -t systemdesign/accountservice-binary --file <full path to Dockerfile.binary> accountService/
+```
+where `<full path to Dockerfile.binary>` represents path to `Dockerfile.binary` e.g. `/home/go/src/github.com/someuser/goSystemDesign/accountService/Dockerfile.binary`. Then use created image `systemdesign/accountservice-binary` to initialize a docker container via command:
  ```bash
-    $ docker run -d -p 8080:8080 test/service:latest
+    $ docker run -d -p 8080:8080 systemdesign/accountservice-binary:latest
 ```
-To check the running containers run
-```bash
-    $ docker container ls
-```
-To test the service go to
+use `docker container ls` to validate existence of container with image `systemdesign/accountservice-binary:latest`. Finally test the service with url:
 ```bash
 http://localhost:8080/accounts/10001
 ```
+which should return some `json` data `{"id": "10001", "name": "Individual_1"}`.
+
+***
+
+### Docker (via raw Go code)
+To create a docker image with raw go code, change directory to project's root `/goSystemDesign` and run:
+```bash
+    $ docker build -t systemdesign/accountservice-raw --file Dockerfile.raw .
+```
+then use created image `systemdesign/accountservice-raw` to initialize a docker container via command:
+ ```bash
+    $ docker run -d -p 8080:8080 systemdesign/accountservice-raw:latest
+```
+use `docker container ls` to validate existence of container with image `systemdesign/accountservice-raw:latest`. Finally test the service with the url
+```bash
+http://localhost:8080/accounts/10001
+```
+which should return some `json` data `{"id": "10001", "name": "Individual_1"}`.

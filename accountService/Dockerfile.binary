@@ -1,0 +1,9 @@
+FROM iron/go
+
+# Expose the default port
+EXPOSE 8080
+
+ADD accountservice-linux-amd64 /
+
+# Entrypoint
+ENTRYPOINT ["./accountservice-linux-amd64"]
