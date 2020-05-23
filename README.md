@@ -26,6 +26,7 @@ The code leverages the following packages:
 * [error](github.com/pkg/errors)
 * [GoConvey](http://goconvey.co)
 * [docker](https://www.docker.com)
+* [iron/go](https://hub.docker.com/r/iron/go)
 * `net/http`
 * `fmt`
 * `io`
@@ -76,10 +77,10 @@ To create a docker image with raw go code, change directory to project's root `/
 ```
 then use created image `systemdesign/accountservice-raw` to initialize a docker container via command:
  ```bash
-    $ docker run -d -p 8080:8080 systemdesign/accountservice-raw:latest
+    $ docker run -d -p 8081:8080 systemdesign/accountservice-raw:latest
 ```
 use `docker container ls` to validate existence of container with image `systemdesign/accountservice-raw:latest`. Finally test the service with the url
 ```bash
-http://localhost:8080/accounts/10001
+http://localhost:8081/accounts/10001
 ```
 which should return some `json` data `{"id": "10001", "name": "Individual_1"}`.
