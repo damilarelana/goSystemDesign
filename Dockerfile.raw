@@ -12,4 +12,4 @@ RUN go install -v ./...
 ENTRYPOINT ["go", "run", "./accountService/main.go"]
 
 # Expose the default port
-EXPOSE 8080
+EXPOSE 8081
