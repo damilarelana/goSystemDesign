@@ -1,7 +1,7 @@
---- 
 #
 # Install Docker and Dependencies
 #
+---
 - hosts: all
   become: true # validates for sudo
   tasks:

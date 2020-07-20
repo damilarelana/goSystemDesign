@@ -1,7 +1,7 @@
---- 
 #
 # Install Docker and Dependencies
 #
+--- 
 - hosts: all
   become: true # validates for sudo
   tasks:
@@ -107,7 +107,7 @@
   #
   - name: Restart cluster
     command:
-      name: kubeadmn init --apiserver-advertise-address="192.168.15.10" --apiserver-cert-extra-sans="192.168.15.10" --node-name k8s-master --pod-network-cidr=192.168.0.0/16
+      name: kubeadmn init --apiserver-advertise-address="192.168.16.10" --apiserver-cert-extra-sans="192.168.16.10" --node-name k8s-master --pod-network-cidr=192.168.0.0/16
       daemon_reload: yes
       state: restarted
 
