@@ -1,5 +1,5 @@
 # IMAGE_NAME = "ubuntu/focal64" # os image for vm i.e. latest ubuntu focal [which has virtualbox pre-installed]
-IMAGE_NAME = "bento/ubuntu-20.04" # os image for vm i.e. using ubuntu-16-04 [to ensure compatible versions e.g. ansible does not work with `ubuntu focal`
+IMAGE_NAME = "bento/ubuntu-18.04" # os image for vm i.e. using ubuntu-16-04 [to ensure compatible versions e.g. ansible does not work with `ubuntu focal`
 N = 2 # num of nodes in cluster i.e. excluding the master3 nodes [1 master + 2 workers]
 
 Vagrant.configure("2") do |config| # defines Vagrant configuration version 2

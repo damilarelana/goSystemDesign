@@ -34,6 +34,7 @@ The code leverages the following packages:
 * [vagrant](https://www.vagrantup.com/)
 * [ansible](https://www.ansible.com/community)
 * [kubernetes](https://kubernetes.io/)
+* [virtualbox](https://www.virtualbox.org/)
 * `net/http`
 * `fmt`
 * `io`
