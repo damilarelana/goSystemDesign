@@ -1,8 +1,7 @@
 
 ---
 - name: Provision the Worker nodes
-  hosts: worker-nodes
-  gather_facts: no
+  hosts: all
   become: true # validates for sudo
   tasks:
     - name: Install apt packages needed for HTTPS
@@ -25,7 +24,7 @@
 
     - name: Add apt repository for stable Docker version
       apt_repository:        # where to download from 
-        repo: "deb [arch=amd64] https::/download.docker.com/linux/ubuntu bionic stable"
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable"
         state: present
 
     - name: Install Docker and its dependencies
@@ -65,7 +64,7 @@
 
     - name: Add apt repository for Kubernetes
       apt_repository: # where to download from 
-        repo: "deb https://apt.kubernetes.io/ kubernetes-bionic main" # https://packages.cloud.google.com/apt/dists/kubernetes-xenial/main/binary-amd64
+        repo: "deb https://apt.kubernetes.io/ kubernetes-xenial main" # https://packages.cloud.google.com/apt/dists/kubernetes-xenial/main/binary-amd64
         state: present
         filename: kubernetes.list
 
@@ -84,15 +83,26 @@
       lineinfile:
         path: /etc/default/kubelet
         line: KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }} # node_ip is passed in by ansible via `ansible.extra_vars` in Vagrant file
+        create: yes
 
     - name: Restart kubelet     # Restart Kubelet
       service:
         name: kubelet
         daemon_reload: yes
         state: restarted
+    #
+    # Initialize Cluster participation [via Master]
+    #
+    - name: Initialize the Kubernetes cluster participation using kubeadm [within Worker]
+      command:
+        name: kubeadmn init --apiserver-advertise-address="192.168.16.10" --apiserver-cert-extra-sans="192.168.16.10" --node-name k8s-master --pod-network-cidr=192.168.0.0/16
+        daemon_reload: yes
+        state: restarted
 
     - name: Copy the join command to server location     # Join Node to the Kubernetes Cluster
-      copy: src=join-command dest=/tmp/join-command.sh mode=0777  # making the join-command read/write/executable
+      copy: 
+        src: join-command 
+        dest: /tmp/join-command.sh mode=0777  # making the join-command read/write/executable
 
     - name: Join the node to Kubernetes Cluster
       command: sh /tmp/join-command.sh

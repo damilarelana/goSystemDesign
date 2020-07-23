@@ -1,8 +1,7 @@
 
 ---
 - name: Provision the Master node
-  hosts: master-nodes
-  gather_facts: no
+  hosts: all
   become: true # validates for sudo
   tasks:
     - name: Install apt packages needed for HTTPS
@@ -19,11 +18,11 @@
           - software-properties-common
     - name: Add apt signing key for Docker
       apt_key:
-        url: https::/download.docker.com/linux/ubuntu/gpg
+        url: https://download.docker.com/linux/ubuntu/gpg
         state: present
     - name: Add apt repository for stable Docker version
       apt_repository:        # where to download from 
-        repo: "deb [arch=amd64] https::/download.docker.com/linux/ubuntu bionic stable"
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable"
         state: present
     - name: Install Docker and its dependencies
       apt:
@@ -63,7 +62,7 @@
         state: present
     - name: Add apt repository for Kubernetes
       apt_repository: # where to download from 
-        repo: "deb https://apt.kubernetes.io/ kubernetes-bionic main" # https://packages.cloud.google.com/apt/dists/kubernetes-xenial/main/binary-amd64
+        repo: "deb https://apt.kubernetes.io/ kubernetes-xenial main" # https://packages.cloud.google.com/apt/dists/kubernetes-xenial/main/binary-amd64
         state: present
         filename: kubernetes.list
     - name: Install Kubernetes binaries
@@ -83,18 +82,19 @@
       lineinfile:
         path: /etc/default/kubelet
         line: KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }}  # node_ip is passed in by ansible via `ansible.extra_vars` in Vagrant file
-   #
-   # Restart Kubelet
-   #
+        create: yes
+    #
+    # Restart Kubelet
+    #
     - name: Restart kubelet
       service:
         name: kubelet
         daemon_relaod: yes
         state: restarted
-   #
-   # Restart Cluster [via Master]
-   #
-    - name: Restart cluster
+    #
+    # Initialize Cluster participation [via Master]
+    #
+    - name: Initialize the Kubernetes cluster participation using kubeadm [within Master]
       command:
         name: kubeadmn init --apiserver-advertise-address="192.168.16.10" --apiserver-cert-extra-sans="192.168.16.10" --node-name k8s-master --pod-network-cidr=192.168.0.0/16
         daemon_reload: yes
@@ -120,8 +120,13 @@
     - name: Generate join command
       command: kubeadmn token create --print-join-command
       register: join_command
+
     - name: Copy join command to local file # i.e. a form of file transfer between nodes
-      local_action: copy content="{{ join_command.stdout_lines[0] }}" dest="./join-command" # map the command [needed by worker nodes to join cluster]
+      copy: 
+        content: "{{ join_command.stdout_lines[0] }}"
+        dest: "./join-command" # map the command [needed by worker nodes to join cluster]
+      delegate_to: localhost
+
  #
  # Notification Handlers
  #
