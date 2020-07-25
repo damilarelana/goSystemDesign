@@ -15,7 +15,8 @@ Vagrant.configure("2") do |config| # defines Vagrant configuration version 2
         master.vm.network "private_network", ip: "192.168.16.10" # '192.168.16.10' to avoid collision with that of virtual machine host it's same network of virtual machine hosts, and also available
         master.vm.hostname = "k8s-master"
         master.vm.provision "ansible" do |ansible|
-            ansible.playbook = "kubernetes-setup/master-playbook.yml"
+            ansible.playbook = "kubernetes-cluster-setup/ansible-playbooks/master-playbook.yml"
+            ansible.inventory_path = "kubernetes-cluster-setup/ansible-inventory/inventory"
             ansible.extra_vars = {
                 node_ip: "192.168.16.10",
             }
@@ -28,7 +29,8 @@ Vagrant.configure("2") do |config| # defines Vagrant configuration version 2
             node.vm.network "private_network", ip: "192.168.16.#{i + 10}"
             node.vm.hostname = "k8s-node-#{i}"
             node.vm.provision "ansible" do |ansible|
-                ansible.playbook = "kubernetes-setup/node-playbook.yml"
+                ansible.playbook = "kubernetes-cluster-setup/ansible-playbooks/node-playbook.yml"
+                ansible.inventory_path = "kubernetes-cluster-setup/ansible-inventory/inventory"
                 ansible.extra_vars = {
                     node_ip: "192.168.16.#{i + 10}",
                 }

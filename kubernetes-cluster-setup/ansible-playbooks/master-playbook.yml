@@ -1,6 +1,6 @@
 
 ---
-- name: Provision the Worker nodes
+- name: Provision the Master node
   hosts: all
   become: true # validates for sudo
   tasks:
@@ -11,22 +11,19 @@
         update_cache: yes
       vars:
         packages:
-        - apt-transport-https
-        - ca-certificates
-        - curl
-        - gnupg-agent
-        - software-properties-common
-
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg-agent
+          - software-properties-common
     - name: Add apt signing key for Docker
       apt_key:
         url: https://download.docker.com/linux/ubuntu/gpg
         state: present
-
     - name: Add apt repository for stable Docker version
       apt_repository:        # where to download from 
         repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable"
         state: present
-
     - name: Install Docker and its dependencies
       apt:
         name: "{{ packages }}"
@@ -34,17 +31,18 @@
         update_cache: yes
       vars:
         packages:
-        - docker-ce
-        - docker-ce-cli
-        - containerd.io
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
       notify: "start docker service"
-
     - name: Add vagrant user to docker group
       user:
         name: vagrant
         group: docker
-    
-    - name: Remove swapfile from virtual-machine's /etc/fstab     # Prep for Kubernetes installation
+    #
+    # Prep for Kubernetes installation
+    #
+    - name: Remove swapfile from virtual-machine's /etc/fstab
       mount:
         name: "{{ item }}"
         fstype: swap
@@ -52,22 +50,21 @@
       with_items:
         - swap
         - none
-  
     - name: Disable swap
       command: swapoff -a
-      when: ansible_swaptotal_mb > 0    
-
-    - name: Add an apt signing key for Kubernetes     # Install Kubernetes [Kubelet, Kubeadm, Kubectl]
+      when: ansible_swaptotal_mb > 0 
+    #
+    # Install Kubernetes [Kubelet, Kubeadm, Kubectl]
+    #
+    - name: Add an apt signing key for Kubernetes
       apt_key:
         url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
         state: present
-
     - name: Add apt repository for Kubernetes
       apt_repository: # where to download from 
         repo: "deb https://apt.kubernetes.io/ kubernetes-xenial main" # https://packages.cloud.google.com/apt/dists/kubernetes-xenial/main/binary-amd64
         state: present
         filename: kubernetes.list
-
     - name: Install Kubernetes binaries
       apt:
         name: "{{ packages }}"
@@ -78,14 +75,18 @@
           - kubelet
           - kubeadm
           - kubectl
-    
-    - name: Configure node ip # Configure network details for VM
+    #
+    # Configure network details for VM
+    #
+    - name: Configure node ip
       lineinfile:
         path: /etc/default/kubelet
-        line: KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }} # node_ip is passed in by ansible via `ansible.extra_vars` in Vagrant file
+        line: KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }}  # node_ip is passed in by ansible via `ansible.extra_vars` in Vagrant file
         create: yes
-
-    - name: Restart kubelet     # Restart Kubelet
+    #
+    # Restart Kubelet
+    #
+    - name: Restart kubelet
       service:
         name: kubelet
         daemon_reload: yes
@@ -93,19 +94,38 @@
     #
     # Initialize Cluster participation [via Master]
     #
-    - name: Initialize the Kubernetes cluster participation using kubeadm [within Worker]
+    - name: Initialize the Kubernetes cluster participation using kubeadm [within Master]
       command:
         name: kubeadmn init --apiserver-advertise-address="192.168.16.10" --apiserver-cert-extra-sans="192.168.16.10" --node-name k8s-master --pod-network-cidr=192.168.0.0/16
         daemon_reload: yes
         state: restarted
+    # 
+    # Setup kube config file for vagrant user to access the kubernetes cluster
+    #
+    - name: Setup kubeconfig for vagrant user
+      command: "{{ item }}"
+      with_items:
+        - mkdir -p /home/vagrant/.kube
+        - cp -i /etc/kubernetes/admin.conf /home/vagrant/.kube/config
+        - chown vagrant:vagrant /home/vagrant/.kube/config
+    #
+    # Setup Container Network Security handling via Calico
+    # 
+    - name: Install Calico Pod Network
+      become: false
+      command: kubectl create -f https://docs.projectcalico.org/v3.4/getting-started/kubernetes/installation/hosted/calico.yaml
+   #
+   # Generate kubernetes cluster join command
+   # 
+    - name: Generate join command
+      command: kubeadmn token create --print-join-command
+      register: join_command
 
-    - name: Copy the join command to server location     # Join Node to the Kubernetes Cluster
+    - name: Copy join command to local file # i.e. a form of file transfer between nodes
       copy: 
-        src: join-command 
-        dest: /tmp/join-command.sh mode=0777  # making the join-command read/write/executable
-
-    - name: Join the node to Kubernetes Cluster
-      command: sh /tmp/join-command.sh
+        content: "{{ join_command.stdout_lines[0] }}"
+        dest: "./join-command" # map the command [needed by worker nodes to join cluster]
+      delegate_to: localhost
 
  #
  # Notification Handlers
